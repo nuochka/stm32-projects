@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# STM32CubeIDE workspace
+.metadata/
+
+# build
+Debug/
+Release/
+
+# Eclipse workspace files
+.settings/
