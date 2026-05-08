@@ -10,3 +10,15 @@ Release/
 
 # Eclipse workspace files
 .settings/
+
+*.launch
+*.cfg
+.project
+.osx.project
+
+# CMSIS duplicates
+* 2.h
+
+# IDE
+*.swp
+*.bak
