@@ -54,6 +54,8 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+ /* LED mapping for 10 LEDs connected to GPIOB */
 GPIO_TypeDef* LED_PORT[10] = {
       GPIOB, GPIOB, GPIOB, GPIOB, GPIOB,
       GPIOB, GPIOB, GPIOB, GPIOB, GPIOB
@@ -64,6 +66,7 @@ GPIO_TypeDef* LED_PORT[10] = {
       LED_6_Pin, LED_7_Pin, LED_8_Pin, LED_9_Pin, LED_10_Pin
     };
 
+  /* Set LED state (ON/OFF) */
   void led_set(int led, bool turn_on){
 	  GPIO_PinState state = (turn_on) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 	  if(led >= 0 && led < 10){
@@ -71,24 +74,25 @@ GPIO_TypeDef* LED_PORT[10] = {
     }
   }
 
+  /* Read button state (active LOW) */
   bool is_button_pressed(int button){
 		switch(button){
 
-		case 0:
+		case 0: // Onboard button (move forward)
 			if(HAL_GPIO_ReadPin(USER_BUTTON_GPIO_Port, USER_BUTTON_Pin) == GPIO_PIN_RESET){
 				return true;
 			} else {
 				return false;
 			}
 
-		case 1:
+		case 1: // External button 1 (move backward)
 			if(HAL_GPIO_ReadPin(USER_BUTTON2_GPIO_Port, USER_BUTTON2_Pin) == GPIO_PIN_RESET){
 				return true;
 			} else {
 				return false;
 			}
 
-		case 2:
+		case 2: // External button 2 (reset sequence)
 			if(HAL_GPIO_ReadPin(USER_BUTTON_RESET_GPIO_Port, USER_BUTTON_RESET_Pin) == GPIO_PIN_RESET){
 				return true;
 			} else {
@@ -140,23 +144,35 @@ int main(void)
   static int led = 0;
   while (1)
   {
-	  //HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	  //HAL_Delay(1000);
+	  // Toggle onboard LED (GPIOA pin 5) every 1 second
+	  // HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	  // HAL_Delay(1000);
 
-//	  if(HAL_GPIO_ReadPin(USER_BUTTON_GPIO_Port, USER_BUTTON_Pin) == GPIO_PIN_RESET){
-//		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-//	  } else {
-//		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-//	  }
+	  /*
+	   * Read onboard user button and control LD2 LED:
+	   * - Button pressed  -> LED ON
+	   * - Button released -> LED OFF
+	   */
+	  // if(HAL_GPIO_ReadPin(USER_BUTTON_GPIO_Port, USER_BUTTON_Pin) == GPIO_PIN_RESET){
+	  //     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+	  // } else {
+	  //     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	  // }
 
-//	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-//	  HAL_Delay(500);
-//
-//	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-//	  HAL_Delay(500);
+	  /*
+	   * Simple test blink on GPIOA pin 0:
+	   * ON for 500 ms, OFF for 500 ms
+	   */
+	  // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+	  // HAL_Delay(500);
+	  //
+	  // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+	  // HAL_Delay(500);
 
+	  /* Turn on current active LED */
 	  led_set(led, true);
 
+	  /* Button 0 (onboard): move LED forward */
 	  if(is_button_pressed(0)){
 		  HAL_Delay(1);
 		  led_set(led, false);
@@ -176,6 +192,7 @@ int main(void)
 
 	  }
 
+	  /* Button 1 (external): move LED backward */
 	  if(is_button_pressed(1)){
 		  led_set(led, false);
 
@@ -195,6 +212,7 @@ int main(void)
 		  HAL_Delay(20);
 	  }
 
+	  /* Button 2 (external): reset sequence */
 	  if(is_button_pressed(2)){
 		  led_set(led, false);
 
