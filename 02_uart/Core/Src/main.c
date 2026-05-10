@@ -57,6 +57,15 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+int __io_putchar(int ch){
+	if(ch == '\n') {
+		uint8_t ch2 = '\r';
+		HAL_UART_Transmit(&huart2, (uint8_t*) &ch2, 1, HAL_MAX_DELAY);
+	}
+	HAL_UART_Transmit(&huart2, (uint8_t*) &ch, 1, HAL_MAX_DELAY);
+	return 1;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -91,6 +100,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  printf("Hello world!");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +109,14 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  uint8_t value;
+	  if(HAL_UART_Receive(&huart2, &value, 1, 2000) == HAL_OK){
+		  printf("Received: %c\n", value);
+	  } else {
+		  printf(".");
+		  fflush(stdout);
+	  }
+
 
     /* USER CODE BEGIN 3 */
   }
