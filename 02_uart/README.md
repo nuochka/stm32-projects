@@ -23,6 +23,7 @@ To open UART serial terminal, use:
 
 ```bash
 screen /dev/cu.usbmodem1203 115200
+```
 
 ## CubeMX Configuration
 
