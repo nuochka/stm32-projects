@@ -58,8 +58,24 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/* Buffer used for storing incoming UART text line */
 static char line_buffer[LINE_MAX_LENGTH + 1];
+
+/* Current number of characters in the line buffer */
 static uint32_t line_length;
+
+/**
+ * @brief Adds a received UART character to the line buffer
+ *
+ * Function behavior:
+ * - Collects characters until '\r' or '\n' is received
+ * - Executes commands:
+ *      "ON"  -> turn LED on
+ *      "OFF" -> turn LED off
+ * - Prints unknown commands back through UART
+ *
+ * @param value Received UART byte
+ */
 
 void line_append(uint8_t value){
 	if(value == '\r' || value == '\n'){
@@ -82,6 +98,16 @@ void line_append(uint8_t value){
 		line_buffer[line_length++] = value;
 	}
 }
+
+/**
+ * @brief Redirects printf() output to UART2
+ *
+ * Sends characters one-by-one through USART2.
+ * Adds '\r' before '\n' for proper terminal formatting.
+ *
+ * @param ch Character to transmit
+ * @retval int Always returns 1
+ */
 
 int __io_putchar(int ch){
 	if(ch == '\n') {
@@ -126,7 +152,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  printf("Hello world!");
+  printf("Hello world!\r\n");
 
   /* USER CODE END 2 */
 
