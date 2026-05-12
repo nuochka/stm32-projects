@@ -111,6 +111,14 @@ int main(void)
   MX_RTC_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  RTC_DateTypeDef date_init = {0};
+
+  date_init.Year = 26;
+  date_init.Month = 5;
+  date_init.Date = 12;
+  date_init.WeekDay = RTC_WEEKDAY_TUESDAY;
+
+  HAL_RTC_SetDate(&hrtc, &date_init, RTC_FORMAT_BIN);
 
   /* USER CODE END 2 */
 
@@ -139,7 +147,7 @@ int main(void)
 	HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
 	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
 
-	printf("Actual time: %02d:%02d:%02d\n",time.Hours, time.Minutes, time.Seconds);
+	printf("Actual time: 20%02d-%02d-%02d, %02d:%02d:%02d\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 	HAL_Delay(200);
   }
   /* USER CODE END 3 */
