@@ -43,6 +43,8 @@ RTC_HandleTypeDef hrtc;
 
 UART_HandleTypeDef huart2;
 
+IWDG_HandleTypeDef hiwdg;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -52,6 +54,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -120,6 +123,9 @@ int main(void)
 
   HAL_RTC_SetDate(&hrtc, &date_init, RTC_FORMAT_BIN);
 
+  uint32_t last_ms = HAL_GetTick();
+
+  MX_IWDG_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -149,6 +155,13 @@ int main(void)
 
 	printf("Actual time: 20%02d-%02d-%02d, %02d:%02d:%02d\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 	HAL_Delay(200);
+
+	uint32_t now = HAL_GetTick();
+	if(now - last_ms >= 500){
+		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		last_ms = now;
+		HAL_IWDG_Refresh(&hiwdg);
+	}
   }
   /* USER CODE END 3 */
 }
@@ -177,8 +190,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_LSE
+                              |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -316,6 +331,19 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void MX_IWDG_Init(void)
+{
+  hiwdg.Instance = IWDG;
+
+  // 32 kHz / 32 = 1 kHz
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Reload = 4095;
+
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 
 /* USER CODE END 4 */
 
