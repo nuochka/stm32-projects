@@ -26,6 +26,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum {
+	MESSAGE_1,
+	MESSAGE_2,
+	DONE
+} sender_state;
 
 /* USER CODE END PTD */
 
@@ -71,6 +76,39 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		push_counter++;
 	}
 }
+volatile sender_state message_number = MESSAGE_1;
+
+void send_message(void){
+    static char message1[] = "Hello world!\r\n";
+    static char message2[] = "Bye world!\r\n";
+
+    switch(message_number){
+    case MESSAGE_1:
+    	HAL_UART_Transmit_IT(
+    	        &huart2,
+    	        (uint8_t*)message1,
+    	        strlen(message1)
+    	    );
+    	message_number = MESSAGE_2;
+    	break;
+    case MESSAGE_2:
+    	HAL_UART_Transmit_IT(
+    	         &huart2,
+    	         (uint8_t*)message2,
+    	         strlen(message2)
+    	    );
+    	message_number = DONE;
+    	break;
+    default:
+    	break;
+    }
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
+    if(huart == &huart2){
+    	send_message();
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -105,6 +143,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  send_message();
 
   /* USER CODE END 2 */
 
@@ -114,10 +153,10 @@ int main(void)
   while (1)
   {
 	 //printf("systick = %lu\n", HAL_GetTick());
-	 if(old_push_counter != push_counter){
-		 old_push_counter = push_counter;
-		 printf("counter = %lu\n", push_counter);
-	 }
+//	 if(old_push_counter != push_counter){
+//		 old_push_counter = push_counter;
+//		 printf("counter = %lu\n", push_counter);
+//	 }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -237,7 +276,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 8, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
