@@ -69,6 +69,7 @@ int __io_putchar(int ch){
 	return 1;
 }
 
+
 volatile uint32_t push_counter;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
@@ -76,6 +77,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		push_counter++;
 	}
 }
+
+
 volatile sender_state message_number = MESSAGE_1;
 
 void send_message(void){
@@ -104,10 +107,44 @@ void send_message(void){
     }
 }
 
+
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
     if(huart == &huart2){
     	send_message();
     }
+}
+
+#define LINE_MAX_LENGTH 80
+static char line_buffer[LINE_MAX_LENGTH + 1];
+static uint32_t line_length;
+void line_append(uint8_t value)
+{
+  if (value == '\r' || value == '\n') {
+    if (line_length > 0) {
+      line_buffer[line_length] = '\0';
+      if (strcmp(line_buffer, "on") == 0) {
+        HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+      } else if (strcmp(line_buffer, "off") == 0) {
+        HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+      }
+      line_length = 0;
+    }
+  }
+  else {
+    if (line_length >= LINE_MAX_LENGTH) {
+      line_length = 0;
+    }
+    line_buffer[line_length++] = value;
+  }
+}
+
+uint8_t uart_rx_buffer;
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if(huart == &huart2){
+		line_append(uart_rx_buffer);
+		HAL_UART_Receive_IT(&huart2, &uart_rx_buffer, 1);
+	}
 }
 
 /* USER CODE END 0 */
@@ -157,6 +194,8 @@ int main(void)
 //		 old_push_counter = push_counter;
 //		 printf("counter = %lu\n", push_counter);
 //	 }
+
+	 HAL_UART_Receive_IT(&huart2, &uart_rx_buffer, 1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
