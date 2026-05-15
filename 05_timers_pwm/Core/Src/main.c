@@ -26,6 +26,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct {
+    float r;
+    float g;
+    float b;
+} rgb_t;
 
 /* USER CODE END PTD */
 
@@ -67,6 +72,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 //		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 //		HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
 	}
+}
+
+static rgb_t hsv_to_rgb(float h, float s, float v)
+{
+    rgb_t out;
+
+    float c = v * s;
+    float x = c * (1.0f - fabsf(fmodf(h / 60.0f, 2) - 1.0f));
+    float m = v - c;
+
+    float r=0, g=0, b=0;
+
+    if (h < 60)      { r = c; g = x; b = 0; }
+    else if (h < 120){ r = x; g = c; b = 0; }
+    else if (h < 180){ r = 0; g = c; b = x; }
+    else if (h < 240){ r = 0; g = x; b = c; }
+    else if (h < 300){ r = x; g = 0; b = c; }
+    else             { r = c; g = 0; b = x; }
+
+    out.r = (r + m);
+    out.g = (g + m);
+    out.b = (b + m);
+
+    return out;
 }
 
 //void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
@@ -127,7 +156,7 @@ int main(void)
 //  HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);
 //  HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_2);
 //  HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_3);
-
+//
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
@@ -136,8 +165,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t counter = 0;
   while (1)
   {
+	  float t = counter * 0.02f;
+
+	  float r = (sinf(t) + 1.0f) * 0.5f;
+	  float g = (sinf(t + 2.0f) + 1.0f) * 0.5f;
+	  float b = (sinf(t + 4.0f) + 1.0f) * 0.5f;
+
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, r * 9999);
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, g * 9999);
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, b * 9999);
+
+	  HAL_Delay(10);
+	  counter++;
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -240,7 +283,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 2500;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -248,6 +291,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.Pulse = 5000;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
