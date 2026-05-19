@@ -109,15 +109,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_ADC_Start(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
+	  uint32_t value = HAL_ADC_GetValue(&hadc1);
+	  float voltage = 3.3f * value / 4096.0f;
+
+	  printf("ADC = %lu (%.3f V)\n", value, voltage);
+
+	  HAL_Delay(200);
     /* USER CODE END WHILE */
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
-	uint32_t value = HAL_ADC_GetValue(&hadc1);
-	float voltage = 3.3f * value / 4096.0f;
-	printf("ADC = %lu (%.3f V)\n", value, voltage);
-
-	HAL_Delay(250);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -224,9 +226,9 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -288,6 +290,7 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
