@@ -43,6 +43,10 @@
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
+COMP_HandleTypeDef hcomp1;
+
+DAC_HandleTypeDef hdac1;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -55,6 +59,8 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_COMP1_Init(void);
+static void MX_DAC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -68,6 +74,8 @@ int __io_putchar(int ch){
 	  HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
 	  return 1;
 }
+
+volatile static uint16_t joystick[2];
 
 /* USER CODE END 0 */
 
@@ -103,12 +111,19 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
+  MX_COMP1_Init();
+  MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
 
-  volatile static uint16_t value[2];
+  //volatile static uint16_t value[2];
 
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, 2);
+  //HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, 2);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)joystick, 2);
+
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 3000);
+  HAL_COMP_Start(&hcomp1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,11 +138,12 @@ int main(void)
 //	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 //	  value[1] = HAL_ADC_GetValue(&hadc1);
 
-	  float voltage1 = 3.3f * value[0] / 4096.0f;
-	  float voltage2 = 3.3f * value[1] / 4096.0f;
+//	  float voltage1 = 3.3f * value[0] / 4096.0f;
+//	  float voltage2 = 3.3f * value[1] / 4096.0f;
+//
+//	  printf("ADC_1 = %lu (%.3f V), ADC_2 = %lu (%.3f V)\n", value[0], voltage1, value[1], voltage2);
 
-	  printf("ADC_1 = %lu (%.3f V), ADC_2 = %lu (%.3f V)\n", value[0], voltage1, value[1], voltage2);
-
+	  printf("VRx=%u, VRy=%u\n", joystick[0], joystick[1]);
 	  HAL_Delay(200);
     /* USER CODE END WHILE */
 
@@ -267,6 +283,83 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief COMP1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_COMP1_Init(void)
+{
+
+  /* USER CODE BEGIN COMP1_Init 0 */
+
+  /* USER CODE END COMP1_Init 0 */
+
+  /* USER CODE BEGIN COMP1_Init 1 */
+
+  /* USER CODE END COMP1_Init 1 */
+  hcomp1.Instance = COMP1;
+  hcomp1.Init.InvertingInput = COMP_INPUT_MINUS_DAC1_CH1;
+  hcomp1.Init.NonInvertingInput = COMP_INPUT_PLUS_IO1;
+  hcomp1.Init.OutputPol = COMP_OUTPUTPOL_INVERTED;
+  hcomp1.Init.Hysteresis = COMP_HYSTERESIS_NONE;
+  hcomp1.Init.BlankingSrce = COMP_BLANKINGSRC_NONE;
+  hcomp1.Init.Mode = COMP_POWERMODE_HIGHSPEED;
+  hcomp1.Init.WindowMode = COMP_WINDOWMODE_DISABLE;
+  hcomp1.Init.TriggerMode = COMP_TRIGGERMODE_NONE;
+  if (HAL_COMP_Init(&hcomp1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN COMP1_Init 2 */
+
+  /* USER CODE END COMP1_Init 2 */
+
+}
+
+/**
+  * @brief DAC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DAC1_Init(void)
+{
+
+  /* USER CODE BEGIN DAC1_Init 0 */
+
+  /* USER CODE END DAC1_Init 0 */
+
+  DAC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN DAC1_Init 1 */
+
+  /* USER CODE END DAC1_Init 1 */
+
+  /** DAC Initialization
+  */
+  hdac1.Instance = DAC1;
+  if (HAL_DAC_Init(&hdac1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** DAC channel OUT1 config
+  */
+  sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
+  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_ENABLE;
+  sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
+  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DAC1_Init 2 */
+
+  /* USER CODE END DAC1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -332,6 +425,7 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
