@@ -119,26 +119,32 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint32_t last_period = 0;
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
   while (1)
   {
 	  uint32_t adc_value = 0;
 	  uint32_t period = 0;
+	  uint32_t pulse = 0;
+
 	  HAL_ADC_Start(&hadc1);
 	  if(HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK){
 		  adc_value = HAL_ADC_GetValue(&hadc1);
 	  }
-
 	  period = 1000UL + (adc_value * 9000UL) / 4095UL;
 
 	  if (abs((int)period - (int)last_period) > 300) {
-		  __HAL_TIM_DISABLE_IT(&htim2, TIM_IT_UPDATE);
+		  //__HAL_TIM_DISABLE_IT(&htim2, TIM_IT_UPDATE);
 		  __HAL_TIM_SET_AUTORELOAD(&htim2, period);
-		  __HAL_TIM_ENABLE_IT(&htim2, TIM_IT_UPDATE);
-
+		  //__HAL_TIM_ENABLE_IT(&htim2, TIM_IT_UPDATE);
 		  last_period = period;
+
 	      printf("ADC=%lu ARR=%lu\n", adc_value, period);
-	        }
+	  }
+	  pulse = (adc_value * period) / 4095UL;
+	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pulse);
+	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
 	  HAL_Delay(100);
     /* USER CODE END WHILE */
 
@@ -250,7 +256,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -292,6 +298,10 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
@@ -306,9 +316,20 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
