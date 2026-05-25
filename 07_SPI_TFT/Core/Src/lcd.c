@@ -95,3 +95,33 @@ void lcd_fill_box(int x, int y, int width, int height, uint16_t color){
 		lcd_data16(color);
 	}
 }
+
+void lcd_put_pixel(int x, int y, uint16_t color){
+	lcd_fill_box(x, y, 1, 1, color);
+}
+
+void lcd_draw_image(int x, int y, int width, int height, const uint8_t* data){
+	lcd_set_window(x, y, width, height);
+	lcd_cmd(ST7735S_RAMWR);
+	for(int i = 0; i < width * height; i++){
+			lcd_data16(data[i]);
+		}
+}
+
+void lcd_draw_rgba_image(int x, int y, int width, int height, const uint16_t* image_data) {
+	lcd_set_window(x, y, width, height);
+
+	    lcd_cmd(ST7735S_RAMWR);
+
+	    int total_pixels = width * height;
+
+	    for(int i = 0; i < total_pixels; i++) {
+	        uint16_t pixel = image_data[i];
+
+	        uint8_t byte1 = (pixel >> 8) & 0xFF;
+	        uint8_t byte2 = pixel & 0xFF;
+
+	        lcd_data(byte1);
+	        lcd_data(byte2);
+	    }
+}

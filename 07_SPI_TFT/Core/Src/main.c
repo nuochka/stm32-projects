@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "spi.h"
 #include "gpio.h"
 
@@ -44,6 +45,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern const uint16_t photo[];
 
 /* USER CODE END PV */
 
@@ -87,23 +89,26 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
   lcd_init();
+  lcd_fill_box(0, 0, 160, 128, BLACK);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
-	  lcd_fill_box(0, 0, 160, 16, RED);
-	  lcd_fill_box(0, 16, 160, 16, GREEN);
-	  lcd_fill_box(0, 32, 160, 16, BLUE);
-	  lcd_fill_box(0, 48, 160, 16, YELLOW);
-	  lcd_fill_box(0, 64, 160, 16, MAGENTA);
-	  lcd_fill_box(0, 80, 160, 16, CYAN);
-	  lcd_fill_box(0, 96, 160, 16, WHITE);
-	  lcd_fill_box(0, 112, 160, 16, BLACK);
+//	  lcd_fill_box(0, 0, 160, 16, RED);
+//	  lcd_fill_box(0, 16, 160, 16, GREEN);
+//	  lcd_fill_box(0, 32, 160, 16, BLUE);
+//	  lcd_fill_box(0, 48, 160, 16, YELLOW);
+//	  lcd_fill_box(0, 64, 160, 16, MAGENTA);
+//	  lcd_fill_box(0, 80, 160, 16, CYAN);
+//	  lcd_fill_box(0, 96, 160, 16, WHITE);
+	  lcd_draw_rgba_image(14, 30, 100, 100, photo);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
