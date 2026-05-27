@@ -25,6 +25,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lcd.h"
+#include <hagl_hal.h>
+#include "hagl.h"
+#include "font6x9.h"
+#include "rgb565.h"
+#include "metaballs.h"
+#include "rotozoom.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +64,13 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	if (hspi == &hspi2)
+	{
+		lcd_transfer_done();
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -93,7 +107,23 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
   lcd_init();
-  lcd_fill_box(0, 0, 160, 128, BLACK);
+
+  hagl_backend_t *display = hagl_init();
+  if (display == NULL) {
+        Error_Handler();
+    }
+//  hagl_clear(display);
+//
+//  for(int i = 0; i < 8; i++){
+//	  hagl_draw_rounded_rectangle(display, 2+i, 2+i, 158-i, 126-i, 8-i, rgb565(255 - (i*20), 0, i*30));
+//  }
+//
+//  hagl_put_text(display, L"Hello World!", 40, 55, YELLOW, font6x9);
+//
+//  lcd_copy();
+  //lcd_fill_box(0, 0, 160, 128, BLACK);
+
+  rotozoom_init(display);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,7 +138,14 @@ int main(void)
 //	  lcd_fill_box(0, 64, 160, 16, MAGENTA);
 //	  lcd_fill_box(0, 80, 160, 16, CYAN);
 //	  lcd_fill_box(0, 96, 160, 16, WHITE);
-	  lcd_draw_rgba_image(14, 30, 100, 100, photo);
+	  //lcd_draw_rgba_image(14, 30, 100, 100, photo);
+	  rotozoom_animate(display);
+
+	  while(lcd_is_busy()) {}
+
+	  rotozoom_render(display);
+	  lcd_copy();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
