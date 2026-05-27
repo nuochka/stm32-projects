@@ -52,6 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+hagl_backend_t *display = NULL;
 extern const uint16_t photo[];
 
 /* USER CODE END PV */
@@ -59,7 +60,7 @@ extern const uint16_t photo[];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void draw_bus_homework(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -106,9 +107,10 @@ int main(void)
   MX_DMA_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  lcd_init();
 
-  hagl_backend_t *display = hagl_init();
+  lcd_init();
+  display = hagl_init();
+
   if (display == NULL) {
         Error_Handler();
     }
@@ -123,7 +125,7 @@ int main(void)
 //  lcd_copy();
   //lcd_fill_box(0, 0, 160, 128, BLACK);
 
-  rotozoom_init(display);
+  //rotozoom_init(display);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -139,12 +141,20 @@ int main(void)
 //	  lcd_fill_box(0, 80, 160, 16, CYAN);
 //	  lcd_fill_box(0, 96, 160, 16, WHITE);
 	  //lcd_draw_rgba_image(14, 30, 100, 100, photo);
-	  rotozoom_animate(display);
+	  //rotozoom_animate(display);
 
 	  while(lcd_is_busy()) {}
 
-	  rotozoom_render(display);
+	  //hagl_clear(display);
+
+	  hagl_fill_rectangle(display, 0, 0, 159, 127, rgb565(40, 40, 40));
+
+	  draw_bus_homework();
+
+	  //rotozoom_render(display);
 	  lcd_copy();
+
+	  HAL_Delay(16);
 
     /* USER CODE END WHILE */
 
@@ -204,6 +214,39 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void draw_bus_homework(void){
+	uint16_t yellow = rgb565(255, 255, 0);
+	uint16_t blue = rgb565(0, 0, 255);
+	uint16_t brown = rgb565(139, 69, 19);
+	uint16_t black = rgb565(0, 0, 0);
+	uint16_t white = rgb565(255, 255, 255);
+
+	// Main Bus Body
+	hagl_fill_rectangle(display, 45, 46, 115, 81, yellow);
+	hagl_draw_rectangle(display, 45, 46, 115, 81, black);
+
+	// Windows
+	hagl_fill_rectangle(display, 50, 51, 68, 64, blue);
+	hagl_fill_rectangle(display, 70, 51, 88, 64, blue);
+	hagl_fill_rectangle(display, 90, 51, 108, 64, blue);
+
+	hagl_draw_rectangle(display, 50, 51, 68, 64, black);
+	hagl_draw_rectangle(display, 70, 51, 88, 64, black);
+	hagl_draw_rectangle(display, 90, 51, 108, 64, black);
+
+	//Left Wheel
+	hagl_fill_circle(display, 63, 81, 7, brown);
+	hagl_draw_circle(display, 63, 81, 7, black);
+
+	// Right wheel
+	hagl_fill_circle(display, 97, 81, 7, brown);
+	hagl_draw_circle(display, 97, 81, 7, black);
+
+	// Front Headlight
+	hagl_fill_rectangle(display, 112, 71, 115, 75, white);
+	hagl_draw_rectangle(display, 112, 71, 115, 75, black);
+}
 
 /* USER CODE END 4 */
 
