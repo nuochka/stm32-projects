@@ -21,6 +21,7 @@
 #include "dma.h"
 #include "spi.h"
 #include "gpio.h"
+#include "adc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -52,8 +53,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint16_t adc_data[3] = {0};
+
 hagl_backend_t *display = NULL;
-extern const uint16_t photo[];
+//extern const uint16_t photo[];
 
 /* USER CODE END PV */
 
@@ -61,6 +64,7 @@ extern const uint16_t photo[];
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void draw_bus_homework(void);
+void draw_light_progress_bar(uint16_t adc_value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -106,14 +110,16 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI2_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
   lcd_init();
   display = hagl_init();
 
   if (display == NULL) {
-        Error_Handler();
-    }
+     Error_Handler();
+  }
 //  hagl_clear(display);
 //
 //  for(int i = 0; i < 8; i++){
@@ -143,6 +149,11 @@ int main(void)
 	  //lcd_draw_rgba_image(14, 30, 100, 100, photo);
 	  //rotozoom_animate(display);
 
+	  HAL_ADC_Start(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, 10);
+
+
+	  uint16_t light_raw = HAL_ADC_GetValue(&hadc1);
 	  while(lcd_is_busy()) {}
 
 	  //hagl_clear(display);
@@ -150,6 +161,12 @@ int main(void)
 	  hagl_fill_rectangle(display, 0, 0, 159, 127, rgb565(40, 40, 40));
 
 	  draw_bus_homework();
+
+	  //light_raw = HAL_ADC_GetValue(&hadc1);
+
+	  //HAL_ADC_Stop(&hadc1);
+
+	  draw_light_progress_bar(light_raw);
 
 	  //rotozoom_render(display);
 	  lcd_copy();
@@ -248,6 +265,31 @@ void draw_bus_homework(void){
 	hagl_draw_rectangle(display, 112, 71, 115, 75, black);
 }
 
+void draw_light_progress_bar(uint16_t adc_value){
+	uint16_t border_color = rgb565(255, 255, 255);
+	uint16_t bar_color = rgb565(0, 255, 0);
+	uint16_t text_color = rgb565(255, 255, 255);
+	uint16_t bg_color = rgb565(40, 40, 40);
+
+	hagl_put_text(display, L"LIGHT:", 10, 5, text_color,  font6x9);
+
+	int16_t x = 10;
+	int16_t y = 18;
+	int16_t max_width = 140;
+	int16_t height = 12;
+
+	hagl_draw_rectangle(display, x, y, x + max_width, y + height, border_color);
+	hagl_fill_rectangle(display, x + 1, y + 1, x + max_width - 1, y + height - 1, bg_color);
+	int16_t fill_width = (adc_value * (max_width - 2)) / 4095;
+
+	if(fill_width > max_width - 2) {
+		fill_width = max_width - 2;
+	}
+
+	if(fill_width > 0){
+		hagl_fill_rectangle(display, x + 1, y + 1, x + 1 + fill_width, y + height - 1, bar_color);
+	}
+}
 /* USER CODE END 4 */
 
 /**
