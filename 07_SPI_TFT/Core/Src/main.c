@@ -56,6 +56,8 @@
 uint16_t adc_data[3] = {0};
 
 hagl_backend_t *display = NULL;
+
+uint16_t adc_x, adc_y, light_raw;
 //extern const uint16_t photo[];
 
 /* USER CODE END PV */
@@ -65,6 +67,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void draw_bus_homework(void);
 void draw_light_progress_bar(uint16_t adc_value);
+void draw_ball(uint16_t adc_x, uint16_t adc_y);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -151,9 +154,14 @@ int main(void)
 
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, 10);
+	  adc_x = HAL_ADC_GetValue(&hadc1);
+
+	  HAL_ADC_PollForConversion(&hadc1, 10);
+	  adc_y = HAL_ADC_GetValue(&hadc1);
 
 
-	  uint16_t light_raw = HAL_ADC_GetValue(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, 10);
+	  light_raw = HAL_ADC_GetValue(&hadc1);
 	  while(lcd_is_busy()) {}
 
 	  //hagl_clear(display);
@@ -162,9 +170,7 @@ int main(void)
 
 	  draw_bus_homework();
 
-	  //light_raw = HAL_ADC_GetValue(&hadc1);
-
-	  //HAL_ADC_Stop(&hadc1);
+	  draw_ball(adc_x, adc_y);
 
 	  draw_light_progress_bar(light_raw);
 
@@ -289,6 +295,30 @@ void draw_light_progress_bar(uint16_t adc_value){
 	if(fill_width > 0){
 		hagl_fill_rectangle(display, x + 1, y + 1, x + 1 + fill_width, y + height - 1, bar_color);
 	}
+}
+
+void draw_ball(uint16_t adc_x, uint16_t adc_y)
+{
+    static float smooth_x = 80;
+    static float smooth_y = 64;
+
+    uint16_t target_x = (adc_x * 159) / 4095;
+    uint16_t target_y = (adc_y * 127) / 4095;
+
+    smooth_x = smooth_x * 0.9f + target_x * 0.1f;
+    smooth_y = smooth_y * 0.9f + target_y * 0.1f;
+
+    uint16_t ball_x = (uint16_t)smooth_x;
+    uint16_t ball_y = (uint16_t)smooth_y;
+
+    if(ball_x < 8) ball_x = 8;
+    if(ball_x > 151) ball_x = 151;
+
+    if(ball_y < 8) ball_y = 8;
+    if(ball_y > 119) ball_y = 119;
+
+    hagl_fill_circle(display, ball_x, ball_y, 8, rgb565(255, 0, 0));
+    hagl_draw_circle(display, ball_x, ball_y, 8, rgb565(255, 255, 255));
 }
 /* USER CODE END 4 */
 
