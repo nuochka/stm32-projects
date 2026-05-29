@@ -22,6 +22,7 @@
 #include "usart.h"
 #include "gpio.h"
 #include "eeprom.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -101,34 +102,73 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  setvbuf(stdout, NULL, _IONBF, 0);
+
   uint32_t boot_counter = 0;
+  uint32_t press_counter = 0;
+  HAL_StatusTypeDef eeprom_status1, eeprom_status2;
 
-  if (eeprom_read(0x10, &boot_counter, sizeof(boot_counter)) != HAL_OK) {
-	  printf("EEPROM Read Error!\r\n");
+  if (HAL_GPIO_ReadPin(BTN1_GPIO_Port, BTN1_Pin) == GPIO_PIN_RESET) {
+  	printf("Button 1 held during boot. Clearing memory...\n");
+
+  	boot_counter = 0;
+  	press_counter = 0;
+
+  	eeprom_write(0x10, &boot_counter, sizeof(boot_counter));
+  	eeprom_write(0x14, &press_counter, sizeof(press_counter));
+  } else {
+  	eeprom_status1 = eeprom_read(0x10, &boot_counter, sizeof(boot_counter));
+  	eeprom_status2 = eeprom_read(0x14, &press_counter, sizeof(press_counter));
+
+  	if (eeprom_status1 != HAL_OK || eeprom_status2 != HAL_OK) {
+  		printf("EEPROM Communication Failed!\n");
+  		boot_counter = 0;
+  		press_counter = 0;
+  	}
+
+  	if (boot_counter == 0xFFFFFFFF) boot_counter = 0;
+  	if (press_counter == 0xFFFFFFFF) press_counter = 0;
   }
-
-  uint8_t result = 0;
-  while(eeprom_read(0x10, &result, sizeof(result)) != HAL_OK) {}
 
   boot_counter++;
-  printf("Boot number %lu\n", boot_counter);
+  printf("Boot number: %lu\r\n", boot_counter);
+  printf("Button 2 total presses saved: %lu\n", press_counter);
 
   if (eeprom_write(0x10, &boot_counter, sizeof(boot_counter)) != HAL_OK) {
-	  printf("EEPROM Write Error!\r\n");
-      Error_Handler();
+  	printf("Could not save updated boot counter!\r\n");
   }
 
+  uint8_t button2_last_state = GPIO_PIN_SET;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+  	uint8_t button2_current_state = HAL_GPIO_ReadPin(BTN2_GPIO_Port, BTN2_Pin);
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+  	if (button2_last_state == GPIO_PIN_SET && button2_current_state == GPIO_PIN_RESET) {
+
+  		HAL_Delay(20);
+
+  		if (HAL_GPIO_ReadPin(BTN2_GPIO_Port, BTN2_Pin) == GPIO_PIN_RESET) {
+  			press_counter++;
+  			printf("Button 2 Pressed! Current count: %lu\r\n", press_counter);
+
+  			if (eeprom_write(0x14, &press_counter, sizeof(press_counter)) != HAL_OK) {
+  				printf("Failed to save press counter to EEPROM!\r\n");
+  			}
+  		}
+  	}
+  	button2_last_state = button2_current_state;
+
+  	HAL_Delay(10);
+      /* USER CODE END WHILE */
+
+      /* USER CODE BEGIN 3 */
+    }
+    /* USER CODE END 3 */
 }
 
 /**
