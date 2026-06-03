@@ -21,6 +21,9 @@
 #define LPS25HB_TEMP_OUT_L 		0x2B
 #define LPS25HB_TEMP_OUT_H 		0x2C
 
+#define LPS25HB_RPDS_L			0x1A
+#define LPS25HB_RPDS_H			0X1B
+
 #define TIMEOUT                 100
 
 static uint8_t lps_read_reg(uint8_t reg)
@@ -83,5 +86,10 @@ float lps25hb_read_pressure(void)
          Error_Handler();
 
      return pressure.raw / 4096.0f;
+}
+
+void lps25hb_set_calib(uint16_t value){
+	lps_write_reg(LPS25HB_RPDS_L, value);
+	lps_write_reg(LPS25HB_RPDS_H, value << 8);
 }
 

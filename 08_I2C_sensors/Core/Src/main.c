@@ -19,13 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "lps25hb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lps25hb.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MAX_HEIGHT_RANGE	5.0f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,7 +99,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USART2_UART_Init();
-
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   printf("Searching...\n");
   if (lps25hb_init() == HAL_OK) {
@@ -108,19 +108,60 @@ int main(void)
     printf("Error: LPS25HB not found\n");
     Error_Handler();
   }
-  HAL_Delay(100);
 
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+
+  HAL_Delay(200);
+
+  float p0 = lps25hb_read_pressure();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
   while (1){
+	  //lps25hb_set_calib(48);
+
+	  float p = lps25hb_read_pressure();
+
+	  float temp_c = lps25hb_read_temp();
+	  float temp_k = temp_c + 273.15;
+
+	  float h = -29.271769 * temp_k * log(p / p0);
+
+	  uint16_t pulse_R = 0;
+	  uint16_t pulse_B = 0;
+
+	  int32_t intensity = (int32_t)((fabsf(h) / MAX_HEIGHT_RANGE) * 9999.0f);
+
+	  if(intensity > 255) intensity = 9999;
+	  if(intensity < 0) intensity = 0;
+
+	  if(h > 0.1f){
+		  pulse_R = intensity;
+		  pulse_B = 0;
+	  } else if (h < -0.1f){
+		  pulse_R = 0;
+		  pulse_B = intensity;
+	  } else {
+		  pulse_R = 0;
+		  pulse_B = 0;
+	  }
+
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulse_R);
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, pulse_B);
+
 	  printf("T = %.1f*C\n", lps25hb_read_temp());
 	  printf("p = %.1f hPa\n", lps25hb_read_pressure());
+	  printf("p0 = %.2f hP\n", p0);
+	  printf("h = %.2f m\n", h);
+	  printf("PWM R: %u, B: %u\n", pulse_R, pulse_B);
+	  printf("------------------------\n");
 	  HAL_Delay(1000);
 
-	 /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

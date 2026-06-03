@@ -14,3 +14,5 @@ float lps25hb_read_temp(void);
 
 float lps25hb_read_pressure(void);
 
+void lps25hb_set_calib(uint16_t value);
+
