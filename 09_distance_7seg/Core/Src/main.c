@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "seg7.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,6 +117,11 @@ int main(void)
 	  uint32_t stop = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
 	  printf("%.1f cm\n", (start - stop) / 58.0f);
 	  HAL_Delay(1000);
+
+	  for(int i = 0; i < 10; i++){
+		  seg7_show_digit(i);
+		  HAL_Delay(500);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
