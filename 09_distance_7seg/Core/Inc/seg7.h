@@ -8,3 +8,7 @@
 #include <stdint.h>
 
 void seg7_show_digit(uint32_t value);
+
+void seg7_show(uint32_t value);
+
+void seg7_update(void);

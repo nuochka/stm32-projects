@@ -67,6 +67,17 @@ int __io_putchar(int ch)
   return 1;
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim6) {
+		seg7_update();
+	} else if (htim == &htim2) {
+		uint32_t start = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
+		uint32_t stop = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
+		seg7_show((stop - start) / 58);
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -100,28 +111,22 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);
 
   HAL_Delay(1000);
   while (1)
   {
-	  uint32_t start = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);
-	  uint32_t stop = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
-	  printf("%.1f cm\n", (start - stop) / 58.0f);
-	  HAL_Delay(1000);
-
-	  for(int i = 0; i < 10; i++){
-		  seg7_show_digit(i);
-		  HAL_Delay(500);
-	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
