@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
+#include "opamp.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -66,6 +68,15 @@ int __io_putchar(int ch)
 
   return 1;
 }
+static float calc_sound_speed(uint32_t adc_value)
+{
+	float voltage = (adc_value * 3.3f) / 4096.0f;
+	float temp = adc_value * 330.0f / 4096.0f;
+	float speed = 331.8f + 0.6f * temp;
+	printf("ADC = %lu, V = %.3f V, T = %.1f C, speed = %.1f m/s\n", adc_value, voltage, temp, speed);
+
+	return speed;
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -112,6 +123,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   MX_TIM6_Init();
+  MX_OPAMP2_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -124,9 +137,18 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);
 
-  HAL_Delay(1000);
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+  HAL_ADC_Start(&hadc1);
+
+  HAL_OPAMP_SelfCalibrate(&hopamp2);
+  HAL_OPAMP_Start(&hopamp2);
   while (1)
   {
+
+	uint32_t adc_value = HAL_ADC_GetValue(&hadc1);
+	calc_sound_speed(adc_value);
+
+	HAL_Delay(250);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
