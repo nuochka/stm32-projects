@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "ir.h"
+#include "ws2818b.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,11 +111,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim2);
   HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+
+  ws2812b_init();
+  ir_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -121,8 +128,23 @@ int main(void)
   while (1)
   {
 	  int value = ir_read();
-	  if(value != -1){
-		  printf("code = %02x\n", value);
+	  switch(value){
+	  case IR_CODE_1:
+		  ws2812b_set_color(0, 255, 0, 0);
+		  ws2812b_update();
+		  break;
+	  case IR_CODE_2:
+		  ws2812b_set_color(0, 0, 255, 0);
+		  ws2812b_update();
+		  break;
+	  case IR_CODE_3:
+		  ws2812b_set_color(0, 0, 0, 255);
+		  ws2812b_update();
+		  break;
+	  case IR_CODE_ONOFF:
+		  ws2812b_set_color(0, 0, 0, 0);
+		  ws2812b_update();
+		  break;
 	  }
     /* USER CODE END WHILE */
 
