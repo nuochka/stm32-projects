@@ -121,6 +121,11 @@ int main(void)
 
   ws2812b_init();
   ir_init();
+
+  int base_r = 255, base_g = 0, base_b = 0;
+  int led_count = 1;
+  int brightness_step = 5;
+  const int MAX_LEDS = 7;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,23 +133,53 @@ int main(void)
   while (1)
   {
 	  int value = ir_read();
-	  switch(value){
-	  case IR_CODE_1:
-		  ws2812b_set_color(0, 255, 0, 0);
+	  if(value != -1){
+		  switch(value){
+		  case IR_CODE_0:
+			  led_count++;
+			  if(led_count > MAX_LEDS){
+				  led_count = 1;
+			  }
+			  break;
+		  case IR_CODE_1:
+			  base_r = 255; base_g = 0; base_b = 0;
+			  break;
+		  case IR_CODE_2:
+			  base_r = 0; base_g = 255; base_b = 0;
+			  break;
+		  case IR_CODE_3:
+			  base_r = 0; base_g = 0; base_b = 255;
+			  break;
+		  case IR_CODE_4:
+			  if(brightness_step > 1){
+				  brightness_step--;
+			  }
+			  break;
+		  case IR_CODE_6:
+			  if(brightness_step < 10){
+				  brightness_step++;
+			  }
+			  break;
+		  case IR_CODE_ONOFF:
+			  ws2812b_set_color(0, 0, 0, 0);
+			  ws2812b_update();
+			  break;
+		  }
+
+		  float brightness_factor = (float)brightness_step / 10.0f;
+
+		  uint8_t final_r = (base_r * brightness_factor);
+		  uint8_t final_g = (base_g * brightness_factor);
+		  uint8_t final_b = (base_b * brightness_factor);
+
+		  for(int i = 0; i < led_count; i++){
+			  ws2812b_set_color(i, final_r, final_g, final_b);
+		  }
+		  for(int i = led_count; i < MAX_LEDS; i++){
+			  ws2812b_set_color(i, 0, 0, 0);
+		  }
+
 		  ws2812b_update();
-		  break;
-	  case IR_CODE_2:
-		  ws2812b_set_color(0, 0, 255, 0);
-		  ws2812b_update();
-		  break;
-	  case IR_CODE_3:
-		  ws2812b_set_color(0, 0, 0, 255);
-		  ws2812b_update();
-		  break;
-	  case IR_CODE_ONOFF:
-		  ws2812b_set_color(0, 0, 0, 0);
-		  ws2812b_update();
-		  break;
 	  }
     /* USER CODE END WHILE */
 

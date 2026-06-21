@@ -81,7 +81,16 @@ int ir_read(void)
 	if (received_bits != 32)
 		return -1;
 
-	uint8_t value = received_value >> 16;
+	uint8_t address = (received_value >> 0) & 0xFF;
+	uint8_t address_inv = (received_value >> 8) & 0xFF;
+	uint8_t command = (received_value >> 16) & 0xFF;
+	uint8_t command_inv = (received_value >> 24) & 0xFF;
+
 	received_bits = 0;
-	return value;
+
+	if((address == (uint8_t)(~address_inv)) && (command == (uint8_t)(~command_inv))){
+		return command;
+	}
+
+	return -1;
 }
